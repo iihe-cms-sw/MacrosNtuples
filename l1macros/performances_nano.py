@@ -12,7 +12,6 @@ ROOT.gInterpreter.Declare('#include "../helpers/Helper_InvariantMass.h"')
 #Importing stuff from other python files
 sys.path.insert(0, '../helpers')
 
-#from helper_nano import * 
 import helper_nano as h
 
 
@@ -34,7 +33,8 @@ def main():
                         -DiJet: For L1 jet studies with events triggered with a SingleJet trigger
                         -MuonJet: For L1 jet studies with events trigger with a SingleMuon trigger
                         -ZToMuMu: For L1 muon studies with Z->mumu
-                        -ZToEE: For L1 EG studies with Z->ee''', 
+                        -ZToEE: For L1 EG studies with Z->ee
+                        ''', 
                         type=str, default='PhotonJet')
     parser.add_argument("--config", dest="config", help="Yaml configuration file to read. Default: full config for that channel.", type=str, default='')
     #parser.add_argument("--plot_nvtx", dest="plot_nvtx", help="Whether to save additional plots in bins of nvtx. Boolean, default = False", type=bool, default=False)
@@ -69,6 +69,7 @@ def main():
         if args.channel == 'DiJet':
             config_file = '../config_cards/full_DiJet.yaml'
 
+
     # Read config and set config_dict in helper
     with open(config_file) as s:
         h.set_config(s)
@@ -91,6 +92,7 @@ def main():
     ###
 
     df = ROOT.RDataFrame('Events', inputFile)
+
     if fltr != '':
         df = df.Filter(fltr)
     nEvents = df.Count().GetValue()
@@ -103,7 +105,6 @@ def main():
 
     print('There are {} events'.format(nEvents))
 
-    
 
     #Max events to run on 
     max_events = min(nEvents, args.max_events) if args.max_events >=0 else nEvents

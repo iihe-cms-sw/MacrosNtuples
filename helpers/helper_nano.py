@@ -9,7 +9,6 @@ from bins import *
 response_bins = array('f',[0.+float(i)/100. for i in range(200)] )
 
 runnb_bins = None
-
 def set_runnb_bins(df):
     global runnb_bins
     if runnb_bins is None:
@@ -301,7 +300,6 @@ def ZMuMu_MuSelection(df, massmin, massmax):
     df = df.Define('_mll', 'mll(Muon_pt, Muon_eta, Muon_phi, isTag, isProbe)')
     df = df.Define('dr_mll', 'dR_mll(Muon_pt, Muon_eta, Muon_phi, isTag, isProbe)')
     
-
     df = df.Define('probe_Pt','Muon_pt[isProbe]')
     df = df.Define('probe_Eta','Muon_eta[isProbe]')
     df = df.Define('probe_Phi','Muon_phi[isProbe]')
@@ -331,6 +329,7 @@ def ZMuMu_MuSelection(df, massmin, massmax):
     df = df.Define('endcapendcap','abs(Muon_eta[0])>1.24&&abs(Muon_eta[1])>1.24')
     return df
 
+
 def DiJetSelection(df):
     '''
     Select events with two jets with pt>500 GeV and mjj>1000 GeV
@@ -355,7 +354,6 @@ def DiJetSelection(df):
     
     
     return df
-
 
 
 
@@ -406,8 +404,8 @@ def makehistosforturnons_inprobeetaranges(df, histos, etavarname, phivarname, pt
                 df_loc = df_loc.Define('numerator_pt',ptvarname+'[inEtaRange&&passL1Cond]')
                 histos[prefix+str_binetapt+suffix] = df_loc.Histo1D(ROOT.RDF.TH1DModel('h_{}_{}'.format(prefix, str_binetapt)+suffix, '', len(binning)-1, binning), 'numerator_pt')
 
-
     return df
+
 
 def ZEE_Plots(df, suffix = ''):
     histos = {}
@@ -475,6 +473,7 @@ def ZEE_Forward_Plots(df, suffix = ''):
     return df, histos
 
 
+    
     
 def ZMuMu_Plots(df, suffix = ''):
 
@@ -544,7 +543,6 @@ def L1ETMHF(df):
     
     return df
 
-
 def CleanJets(df):
     #List of cleaned jets (noise cleaning + lepton/photon overlap removal)
     df = df.Define('_jetPassID', 'Jet_jetId>=4')
@@ -591,13 +589,18 @@ def EtSum(df, suffix = ''):
     df = df.Define('MetNoMu','sqrt(metnomu_x*metnomu_x+metnomu_y*metnomu_y)')
 
     # Dijet selections
-    df = df.Define('hastwocleanjets', 'PassDiJet80_40_Mjj500(cleanJet_Pt, cleanJet_Eta, cleanJet_Phi)')
-    df = df.Define('vbf_selection', 'PassDiJet140_70_Mjj900(cleanJet_Pt, cleanJet_Eta, cleanJet_Phi)')
+    df = df.Define('hastwocleanjets', 'PassDiJet(cleanJet_Pt, cleanJet_Eta, cleanJet_Phi, 80, 40, 500)')
+    df = df.Define('vbf_selection', 'PassDiJet(cleanJet_Pt, cleanJet_Eta, cleanJet_Phi, 140, 70, 900)')
     df = df.Define('hastwocentraljets', 'PassDiJet80_40_Mjj500_central(cleanJet_Pt, cleanJet_Eta, cleanJet_Phi)')
     df = df.Define('hastwoHFjets', 'PassDiJet80_40_Mjj500_HF(cleanJet_Pt, cleanJet_Eta, cleanJet_Phi)')
 
+    # for VBF trig
+    #df = df.Define('HLT_VBF_filter', 'run>367661&&PassDiJet75_40_500(cleanJet_Pt, cleanJet_Eta, cleanJet_Phi)')
+    df = df.Define('HLT_VBF_filter', 'PassDiJet75_40_500(cleanJet_Pt, cleanJet_Eta, cleanJet_Phi)')
+
     histos['h_MetNoMu_Denominator'+suffix] = df.Histo1D(ROOT.RDF.TH1DModel('h_MetNoMu_Denominator'+suffix, '', len(jetmetpt_bins)-1, array('d',jetmetpt_bins)), 'MetNoMu') 
     
+
     dfmetl1 = df.Filter('L1_ETMHF80')
     histos['L1_ETMHF80'+suffix] = dfmetl1.Histo1D(ROOT.RDF.TH1DModel('h_MetNoMu_ETMHF80'+suffix, '', len(jetmetpt_bins)-1, array('d',jetmetpt_bins)), 'MetNoMu')
     dfmetl1 = df.Filter('L1_ETMHF90')
@@ -640,6 +643,11 @@ def EtSum(df, suffix = ''):
 
     # VBF (Met + jet) trigger
     histos['HLT_DiJet110_35_Mjj650_PFMET110_DiJet140_70_Mjj900'+suffix] =  df.Filter('HLT_DiJet110_35_Mjj650_PFMET110&&vbf_selection').Histo1D(ROOT.RDF.TH1DModel('h_HLT_DiJet110_35_Mjj650_PFMET110_DiJet140_70_Mjj900'+suffix, '', len(jetmetpt_bins)-1, array('d',jetmetpt_bins)), 'MetNoMu')
+
+    # VBF trigger
+    if max(runnb_bins) > 367661:
+        histos['h_MetNoMu_Denominator_VBF_DiJet70_40_500'+suffix] = df.Filter('run>367661').Filter('HLT_VBF_filter').Histo1D(ROOT.RDF.TH1DModel('h_MetNoMu_Denominator_VBF_DiJet70_40_500'+suffix, '', len(jetmetpt_bins)-1, array('d',jetmetpt_bins)), 'MetNoMu')
+        histos['HLT_VBF_DiPFJet75_40_Mjj500_Detajj2p5_PFMET85'+suffix] =  df.Filter('run>367661').Filter('HLT_VBF_filter&&HLT_VBF_DiPFJet75_40_Mjj500_Detajj2p5_PFMET85').Histo1D(ROOT.RDF.TH1DModel('HLT_VBF_DiPFJet75_40_Mjj500_Detajj2p5_PFMET85'+suffix, '', len(jetmetpt_bins)-1, array('d',jetmetpt_bins)), 'MetNoMu')
 
     return df, histos
 
@@ -697,7 +705,6 @@ def AnalyzeCleanJets(df, JetRecoPtCut, L1JetPtCut, suffix = ''):
         df = df.Define('cleanJet_L1IsoTau_Pt','GetVal(cleanJet_idxL1IsoTau, L1Tau_pt)')
         df = df.Define('cleanJet_L1IsoTau_Bx','GetVal(cleanJet_idxL1IsoTau, L1Tau_bx)')
 
-
         df = df.Define('cleanJet_idxL1Jet','FindL1ObjIdx(L1Jet_eta, L1Jet_phi, cleanJet_Eta, cleanJet_Phi)')
         df = df.Define('cleanJet_idxL1Jet_Bx0','FindL1ObjIdx_setBx(L1Jet_eta, L1Jet_phi, L1Jet_bx, cleanJet_Eta, cleanJet_Phi, 0)')
         df = df.Define('cleanJet_idxL1Jet_Bxmin1','FindL1ObjIdx_setBx(L1Jet_eta, L1Jet_phi, L1Jet_bx, cleanJet_Eta, cleanJet_Phi, -1)')
@@ -715,9 +722,7 @@ def AnalyzeCleanJets(df, JetRecoPtCut, L1JetPtCut, suffix = ''):
         histos = getprefiringhistos(df, histos, probecondition='cleanJet_Pt>50', l1objname='L1EG', etabinning=[-5., -3., -2.5, -1.3, 0., 1.3, 2.5, 3., 5.], ptbinning=jetmetpt_bins, l1threshold=20, probe_str='cleanJet', suffix = suffix)
         histos = getprefiringhistos(df, histos, probecondition='cleanJet_Pt>50', l1objname='L1IsoTau', etabinning=[-5., -3., -2.5, -1.3, 0., 1.3, 2.5, 3., 5.], ptbinning=jetmetpt_bins, l1threshold=25, probe_str='cleanJet', suffix = suffix)
 
-
     return df, histos
-
 
     
 def PrefiringVsMjj(df): 
